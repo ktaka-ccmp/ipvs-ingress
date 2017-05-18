@@ -1,0 +1,78 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: basic-ingress
+spec:
+  backend:
+    serviceName: tea-svc
+    servicePort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tea-svc
+  labels:
+    app: tea
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: tea
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+#apiVersion: v1
+#kind: ReplicationController
+metadata:
+  name: tea-rc
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: tea
+    spec:
+      containers:
+      - name: tea
+        image: nginx
+        ports:
+        - containerPort: 80
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: dummy-ingress-controller
+  namespace: default
+  labels:
+    app: dummy-ingress-controller
+spec:
+  selector:
+    matchLabels:
+      app: dummy-ingress-controller
+  template:
+    metadata:
+      labels:
+        app: dummy-ingress-controller
+    spec:
+      containers:
+      - name: server
+        image: 10.0.0.10:5000/ktaka/dummy-ingress-ctlr:0.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 10254
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        args:
+        - /server
+        - --default-backend-service=$(POD_NAMESPACE)/tea-svc
+#        - --default-backend-service=$(POD_NAMESPACE)/default-backend
