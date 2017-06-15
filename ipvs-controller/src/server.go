@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"syscall"
 	"os/exec"
 	"strings"
 //	"io/ioutil"
@@ -29,17 +30,31 @@ func main() {
 	ic.Start()
 }
 
+
 func newIPVSController() ingress.Controller {
-	return &IPVSController{}
+	ipvs := &IPVSController{}
+	ipvs.Start()
+	return ipvs
 }
 
-type IPVSController struct{}
+type IPVSController struct{
+	Pid int
+}
+
+func (ipvs *IPVSController) Start() {
+	cmd := exec.Command("keepalived", "-nCDlf", "/etc/keepalived/ipvs.conf")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Start()
+	Pid = cmd.Process.Pid
+}
 
 func (ipvs IPVSController) SetConfig(cfgMap *api.ConfigMap) {
 	log.Printf("Config map %+v", cfgMap)
 }
 
 func (ipvs IPVSController) Reload(data []byte) ([]byte, bool, error) {
+	ipvs.cmd.Process.Signal(syscall.SIGHUP)
 	out, err := exec.Command("echo", string(data)).CombinedOutput()
 	if err != nil {
 		return out, false, err
@@ -48,9 +63,9 @@ func (ipvs IPVSController) Reload(data []byte) ([]byte, bool, error) {
 	return out, true, err
 }
 
-func (ipvs IPVSController) Test(file string) *exec.Cmd {
-	return exec.Command("echo", file)
-}
+//func (ipvs IPVSController) Test(file string) *exec.Cmd {
+//	return exec.Command("echo", file)
+//}
 
 func (ipvs IPVSController) OnUpdate(updatePayload ingress.Configuration) ([]byte, error) {
 	log.Printf("Received OnUpdate notification")
@@ -64,7 +79,7 @@ func (ipvs IPVSController) OnUpdate(updatePayload ingress.Configuration) ([]byte
 		}
 
 		for _, a := range eps {
-		log.Printf("Endpoint %v:%v added to %v.", a.Address, a.Port, b.Name)
+		log.Printf("Endpoint %v:%v added to %v:%v.", a.Address, a.Port, b.Name, b.Port)
 		}
 		
 
@@ -80,6 +95,7 @@ func (ipvs IPVSController) OnUpdate(updatePayload ingress.Configuration) ([]byte
 //		log.Printf("%v: %v", b.Name, strings.Join(cnf, ""))
 //		ioutil.WriteFile("hello", []byte(strings.Join(eps, ", ")) , 0644)
 	}
+	
 	return []byte("hello"), nil
 }
 
@@ -113,6 +129,6 @@ func (n IPVSController) SetListers(lister ingress.StoreLister) {
 }
 
 func (n IPVSController) DefaultIngressClass() string {
-	return "dummy"
+	return "ipvs"
 }
 
