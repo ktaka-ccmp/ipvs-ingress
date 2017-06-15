@@ -3,9 +3,11 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
-	"io/ioutil"
+//	"io/ioutil"
+	"text/template"
 
 	"github.com/spf13/pflag"
 
@@ -53,12 +55,30 @@ func (ipvs IPVSController) Test(file string) *exec.Cmd {
 func (ipvs IPVSController) OnUpdate(updatePayload ingress.Configuration) ([]byte, error) {
 	log.Printf("Received OnUpdate notification")
 	for _, b := range updatePayload.Backends {
-		eps := []string{}
-		for _, e := range b.Endpoints {
-			eps = append(eps, e.Address)
+		type ep struct{
+			Address,Port string
 		}
-		log.Printf("%v: %v", b.Name, strings.Join(eps, ", "))
-		ioutil.WriteFile("hello", []byte(strings.Join(eps, ", ")) , 0644)
+		eps := []ep{}
+		for _, e := range b.Endpoints {
+			eps = append(eps, ep{Address: e.Address, Port: e.Port})
+		}
+
+		for _, a := range eps {
+		log.Printf("Endpoint %v:%v added to %v.", a.Address, a.Port, b.Name)
+		}
+		
+
+		cnf := []string{"/etc/keepalived/ipvs.d/" , b.Name , ".conf"}
+		w, err := os.Create(strings.Join(cnf, ""))
+		if err != nil {
+			return []byte("Ooops"), err
+		}
+		tpl := template.Must(template.ParseFiles("ipvs.conf.tmpl"))
+		tpl.Execute(w, eps)
+		w.Close()
+
+//		log.Printf("%v: %v", b.Name, strings.Join(cnf, ""))
+//		ioutil.WriteFile("hello", []byte(strings.Join(eps, ", ")) , 0644)
 	}
 	return []byte("hello"), nil
 }

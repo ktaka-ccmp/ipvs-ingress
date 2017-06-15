@@ -5,7 +5,7 @@ metadata:
 spec:
   backend:
     serviceName: tea-svc
-    servicePort: 80
+    servicePort: 81
 ---
 apiVersion: v1
 kind: Service
@@ -15,7 +15,7 @@ metadata:
     app: tea
 spec:
   ports:
-  - port: 80
+  - port: 81
     targetPort: 80
     protocol: TCP
     name: http

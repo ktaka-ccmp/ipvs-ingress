@@ -1,0 +1,19 @@
+virtual_server 0.0.0.0 8888 {
+    delay_loop 5
+    lb_algo lc
+    lb_kind NAT
+    protocol TCP
+#        alpha
+
+{{range .}}
+    real_server {{.Address}} {{.Port}} {
+	uthreshold 20000
+	TCP_CHECK {
+		connect_timeout 5
+		connect_port {{.Port}}
+	}
+    }
+{{end}}
+}
+
+
