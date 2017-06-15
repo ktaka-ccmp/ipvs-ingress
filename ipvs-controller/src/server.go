@@ -20,9 +20,15 @@ import (
 	"k8s.io/ingress/core/pkg/ingress/defaults"
 )
 
+
+var cmd = exec.Command("keepalived", "-nCDlf", "/etc/keepalived/ipvs.conf")
+
 func main() {
 	ipvs := newIPVSController()
 	ic := controller.NewIngressController(ipvs)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Start()
 	defer func() {
 		log.Printf("Shutting down ingress controller...")
 		ic.Stop()
@@ -32,29 +38,17 @@ func main() {
 
 
 func newIPVSController() ingress.Controller {
-	ipvs := &IPVSController{}
-	ipvs.Start()
-	return ipvs
+	return &IPVSController{}
 }
 
-type IPVSController struct{
-	Pid int
-}
-
-func (ipvs *IPVSController) Start() {
-	cmd := exec.Command("keepalived", "-nCDlf", "/etc/keepalived/ipvs.conf")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Start()
-	Pid = cmd.Process.Pid
-}
+type IPVSController struct{}
 
 func (ipvs IPVSController) SetConfig(cfgMap *api.ConfigMap) {
 	log.Printf("Config map %+v", cfgMap)
 }
 
 func (ipvs IPVSController) Reload(data []byte) ([]byte, bool, error) {
-	ipvs.cmd.Process.Signal(syscall.SIGHUP)
+	cmd.Process.Signal(syscall.SIGHUP)
 	out, err := exec.Command("echo", string(data)).CombinedOutput()
 	if err != nil {
 		return out, false, err
@@ -62,10 +56,6 @@ func (ipvs IPVSController) Reload(data []byte) ([]byte, bool, error) {
 	log.Printf("Issue kill to keepalived. Reloaded new config %s", out)
 	return out, true, err
 }
-
-//func (ipvs IPVSController) Test(file string) *exec.Cmd {
-//	return exec.Command("echo", file)
-//}
 
 func (ipvs IPVSController) OnUpdate(updatePayload ingress.Configuration) ([]byte, error) {
 	log.Printf("Received OnUpdate notification")
@@ -81,7 +71,6 @@ func (ipvs IPVSController) OnUpdate(updatePayload ingress.Configuration) ([]byte
 		for _, a := range eps {
 		log.Printf("Endpoint %v:%v added to %v:%v.", a.Address, a.Port, b.Name, b.Port)
 		}
-		
 
 		cnf := []string{"/etc/keepalived/ipvs.d/" , b.Name , ".conf"}
 		w, err := os.Create(strings.Join(cnf, ""))
@@ -91,9 +80,6 @@ func (ipvs IPVSController) OnUpdate(updatePayload ingress.Configuration) ([]byte
 		tpl := template.Must(template.ParseFiles("ipvs.conf.tmpl"))
 		tpl.Execute(w, eps)
 		w.Close()
-
-//		log.Printf("%v: %v", b.Name, strings.Join(cnf, ""))
-//		ioutil.WriteFile("hello", []byte(strings.Join(eps, ", ")) , 0644)
 	}
 	
 	return []byte("hello"), nil
@@ -104,15 +90,15 @@ func (ipvs IPVSController) BackendDefaults() defaults.Backend {
 	return nginxconfig.NewDefault().Backend
 }
 
-func (n IPVSController) Name() string {
+func (ipvs IPVSController) Name() string {
 	return "IPVS Controller"
 }
 
-func (n IPVSController) Check(_ *http.Request) error {
+func (ipvs IPVSController) Check(_ *http.Request) error {
 	return nil
 }
 
-func (dc IPVSController) Info() *ingress.BackendInfo {
+func (ipvs IPVSController) Info() *ingress.BackendInfo {
 	return &ingress.BackendInfo{
 		Name:       "dummy",
 		Release:    "0.0.0",
@@ -121,14 +107,14 @@ func (dc IPVSController) Info() *ingress.BackendInfo {
 	}
 }
 
-func (n IPVSController) OverrideFlags(*pflag.FlagSet) {
+func (ipvs IPVSController) OverrideFlags(*pflag.FlagSet) {
 }
 
-func (n IPVSController) SetListers(lister ingress.StoreLister) {
+func (ipvs IPVSController) SetListers(lister ingress.StoreLister) {
 
 }
 
-func (n IPVSController) DefaultIngressClass() string {
+func (ipvs IPVSController) DefaultIngressClass() string {
 	return "ipvs"
 }
 
