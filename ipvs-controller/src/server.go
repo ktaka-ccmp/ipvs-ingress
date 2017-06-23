@@ -72,6 +72,9 @@ func (ipvs IPVSController) OnUpdate(updatePayload ingress.Configuration) ([]byte
 		log.Printf("Endpoint %v:%v added to %v:%v.", a.Address, a.Port, b.Name, b.Port)
 		}
 
+		if b.Name == "upstream-default-backend" {
+			continue
+		}
 		cnf := []string{"/etc/keepalived/ipvs.d/" , b.Name , ".conf"}
 		w, err := os.Create(strings.Join(cnf, ""))
 		if err != nil {
