@@ -73,11 +73,11 @@ spec:
               fieldRef:
                 fieldPath: metadata.namespace
         args:
-        - /server
+        - /server.sh
         - --default-backend-service=$(POD_NAMESPACE)/tea-svc
 #        - --default-backend-service=$(POD_NAMESPACE)/default-backend
         securityContext:
-#          privileged: true
+          privileged: true
           capabilities:
             add:
 #              - ALL
