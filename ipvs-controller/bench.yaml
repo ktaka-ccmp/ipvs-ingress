@@ -41,7 +41,7 @@ spec:
       containers:
       - name: tea
 #        image: nginx
-        image: 192.168.0.104:5000/test/nginx
+        image: 10.0.0.100:5000/test/nginx
         ports:
         - containerPort: 80
 ---
@@ -65,7 +65,7 @@ spec:
         lvs: "yes"
       containers:
       - name: server
-        image: 192.168.0.104:5000/ktaka/ipvs-controller:0.1
+        image: 10.0.0.100:5000/ktaka/ipvs-controller:0.1
         imagePullPolicy: Always
         ports:
         - containerPort: 10254

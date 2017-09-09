@@ -28,10 +28,10 @@ server: src/server.go vendor
 	CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH) GOARM=6 go build -a -installsuffix cgo -ldflags '-w' -o server ./src
 
 container: server
-	docker build --pull -t $(PREFIX):$(TAG) .
+	sudo docker build --pull -t $(PREFIX):$(TAG) .
 
 push: container
-	docker push $(PREFIX):$(TAG)
+	sudo docker push $(PREFIX):$(TAG)
 
 clean:
 	rm -f server
