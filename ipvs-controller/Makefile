@@ -9,19 +9,21 @@ TAG=0.1
 ME?= localhost
 PREFIX?= $(ME):5000/ktaka/ipvs-controller
 ARCH?=amd64
-GOLANG_VERSION=1.8
+GOLANG_VERSION=1.9
 #export GOPATH := $HOME/go
 
-init-vendor: 
+install-glide: 
 	rm -rf vendor
 	command -v glide || curl https://glide.sh/get | sh
+
+init-vendor: install-glide
 	glide init --non-interactive
 	glide update -v
 
-update-vendor:
+update-vendor: install-glide
 	glide update -v
 
-vendor: glide.yaml glide.lock
+vendor: glide.yaml glide.lock install-glide
 	glide install -v
 
 server: src/server.go vendor
