@@ -41,7 +41,7 @@ spec:
       containers:
       - name: tea
 #        image: nginx
-        image: 10.0.0.10:5000/test/nginx
+        image: 10.0.0.100:5000/test/nginx
         ports:
         - containerPort: 80
 ---
@@ -53,7 +53,7 @@ metadata:
   labels:
     app: ipvs-controller
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: ipvs-controller
@@ -66,7 +66,7 @@ spec:
         lvs: "yes"
       containers:
       - name: server
-        image: 10.0.0.10:5000/ktaka/ipvs-controller:0.1
+        image: 10.0.0.100:5000/ktaka/ipvs-controller:0.1
         imagePullPolicy: Always
         ports:
         - containerPort: 10254
@@ -93,6 +93,12 @@ spec:
         volumeMounts:
         - mountPath: /lib/modules
           name: lib-modules
+      - name: vrrp
+        image: 10.0.0.100:5000/test/keepalived
+        securityContext:
+          capabilities:
+            add:
+              - NET_ADMIN
       volumes:
       - name: lib-modules
         hostPath:
