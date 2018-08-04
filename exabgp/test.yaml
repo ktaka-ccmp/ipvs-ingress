@@ -18,7 +18,7 @@ spec:
       nodeSelector:
         lvs: "yes"
       containers:
-      - name: server
+      - name: exabgp
         image: 10.0.0.10:5000/ktaka/exabgp:0.1
         imagePullPolicy: Always
         ports:
@@ -46,20 +46,18 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-        args:
-#        - /server.sh
-#        - --default-backend-service=$(POD_NAMESPACE)/tea-svc
         securityContext:
           privileged: true
           capabilities:
             add:
-              - SYS_MODULE
+#              - SYS_MODULE
               - NET_ADMIN
         volumeMounts:
-        - mountPath: /lib/modules
-          name: lib-modules
+        - mountPath: /var/run/netns/node
+          name: netns-node
       volumes:
-      - name: lib-modules
+      - name: netns-node
         hostPath:
-          path: /lib/modules
+          path: /proc/1/ns/net
+
 
