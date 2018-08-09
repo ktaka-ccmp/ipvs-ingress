@@ -1,65 +1,27 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: ipvs-ingress
+  name: ipvs-ingress2
 spec:
   backend:
     serviceName: tea-svc
     servicePort: 81
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: tea-svc
-  labels:
-    app: tea
-spec:
-  ports:
-  - port: 81
-    targetPort: 80
-    protocol: TCP
-    name: http
-  selector:
-    app: tea
-  clusterIP: 10.254.0.10
----
-apiVersion: extensions/v1beta1
-kind: Deployment
-#apiVersion: v1
-#kind: ReplicationController
-metadata:
-  name: tea-rc
-spec:
-  replicas: 3
-  template:
-    metadata:
-      labels:
-        app: tea
-    spec:
-      nodeSelector:
-        web: "yes"
-      containers:
-      - name: tea
-#        image: nginx
-        image: 10.0.0.40:5000/test/nginx
-        ports:
-        - containerPort: 80
----
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: ipvs-controller
+  name: ipvs-controller2
   namespace: default
   labels:
-    app: ipvs-controller
+    app: ipvs-controller2
 spec:
   selector:
     matchLabels:
-      app: ipvs-controller
+      app: ipvs-controller2
   template:
     metadata:
       labels:
-        app: ipvs-controller
+        app: ipvs-controller2
     spec:
       nodeSelector:
         lvs: "yes"
@@ -98,7 +60,7 @@ spec:
         - containerPort: 10254
         env:
           - name: PREFIX
-            value: 10.1.1.0/24
+            value: 10.1.2.0/24
           - name: AS_NUM
             value: "65021"
           - name: PEER_IP1

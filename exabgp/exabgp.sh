@@ -1,8 +1,20 @@
 #!/bin/bash
 
 cat << EOF  > bgp.conf
-neighbor ${PEER_IP} {
+neighbor ${PEER_IP1} {
  description "peer1";
+ router-id ${POD_IP};
+ local-address ${POD_IP};
+ local-as ${AS_NUM};
+ peer-as ${AS_NUM};
+ hold-time 1800;
+        static {
+                route ${PREFIX} next-hop ${NODE_IP};
+        }
+}
+
+neighbor ${PEER_IP2} {
+ description "peer2";
  router-id ${POD_IP};
  local-address ${POD_IP};
  local-as ${AS_NUM};
