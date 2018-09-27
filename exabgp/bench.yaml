@@ -41,7 +41,7 @@ spec:
       containers:
       - name: tea
 #        image: nginx
-        image: 10.0.0.40:5000/test/nginx
+        image: 192.168.0.102:5000/test/nginx
         ports:
         - containerPort: 80
 ---
@@ -65,7 +65,7 @@ spec:
         lvs: "yes"
       containers:
       - name: server
-        image: 10.0.0.40:5000/ktaka/ipvs-controller:0.1
+        image: 192.168.0.102:5000/ktaka/ipvs-controller:0.1
         imagePullPolicy: Always
         ports:
         - containerPort: 10254
@@ -92,7 +92,7 @@ spec:
           name: lib-modules
 #
       - name: exabgp
-        image: 10.0.0.40:5000/ktaka/exabgp:0.1
+        image: 192.168.0.102:5000/ktaka/exabgp:0.1
         imagePullPolicy: Always
         ports:
         - containerPort: 10254
@@ -101,10 +101,8 @@ spec:
             value: 10.1.1.0/24
           - name: AS_NUM
             value: "65021"
-          - name: PEER_IP1
-            value: 10.0.0.49
-          - name: PEER_IP2
-            value: 10.0.0.49
+          - name: PEER_IP
+            value: 192.168.0.102
           - name: POD_IP
             valueFrom:
               fieldRef:
