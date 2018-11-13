@@ -41,9 +41,24 @@ spec:
       containers:
       - name: tea
 #        image: nginx
-        image: 192.168.0.102:5000/test/nginx
+#        image: 192.168.0.102:5000/test/nginx
+        image: 192.168.0.102:5000/test/nginx-lvs-tun
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+              - SYS_MODULE
+              - NET_ADMIN
+        volumeMounts:
+        - mountPath: /lib/modules
+          name: lib-modules
         ports:
         - containerPort: 80
+      volumes:
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
