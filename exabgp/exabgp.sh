@@ -15,8 +15,9 @@ neighbor ${PEER_IP} {
 
 EOF
 
-/sbin/ip netns exec node /sbin/ip route replace ${PREFIX} dev docker0
-/sbin/ip route add local ${PREFIX} dev eth0
+/sbin/ip netns exec node /sbin/ip route replace local ${PREFIX} dev lo
+#/sbin/ip route add local ${PREFIX} dev eth0
 
 exec exabgp ./bgp.conf
+
 

@@ -1,16 +1,21 @@
 #!/bin/bash
 
-sysctl -w net.ipv4.ip_forward="1"
-sysctl -w net.ipv4.vs.conntrack="1"
-sysctl -w net.netfilter.nf_conntrack_max="20000000"
+/sbin/ip netns exec node sysctl -w net.ipv4.ip_forward="1"
+/sbin/ip netns exec node sysctl -w net.ipv4.vs.conntrack="1"
+/sbin/ip netns exec node sysctl -w net.netfilter.nf_conntrack_max="20000000"
 #sysctl -w net.nf_conntrack_max="20000000"
-sysctl -w net.ipv4.vs.conn_reuse_mode="0"
+/sbin/ip netns exec node sysctl -w net.ipv4.vs.conn_reuse_mode="0"
 
-iptables -t mangle -A PREROUTING  -p tcp  --dport 8888 -j MARK --set-mark 1
-iptables -t mangle -A PREROUTING  -p tcp  --dport 80 -j MARK --set-mark 2
-iptables -t nat -A POSTROUTING -m ipvs --vaddr 0.0.0.0/0 -j MASQUERADE
+node="/sbin/ip netns exec node"
+
+($node iptables -t nat -C POSTROUTING -m ipvs --vaddr ${VIP} -j MASQUERADE ) || $node iptables -t nat -A POSTROUTING -m ipvs --vaddr ${VIP} -j MASQUERADE
+
+$node ipvsadm -D -t ${VIP}:80
+$node ipvsadm -D -t ${VIP}:8888
 
 touch /etc/keepalived/ipvs.d/dummy.conf
 
-exec /server $@
+envsubst < ipvs.conf.tmpl.tmpl > ipvs.conf.tmpl 
+
+/sbin/ip netns exec node /server $@
 

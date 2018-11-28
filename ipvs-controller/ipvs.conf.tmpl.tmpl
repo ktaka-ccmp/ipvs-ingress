@@ -1,4 +1,4 @@
-virtual_server fwmark 1 {
+virtual_server ${VIP} 8888 {
     delay_loop 5
     lb_algo rr
     lb_kind NAT
@@ -17,7 +17,7 @@ virtual_server fwmark 1 {
 }
 
 
-virtual_server fwmark 2 {
+virtual_server ${VIP} 80 {
     delay_loop 5
     lb_algo rr
     lb_kind TUN
