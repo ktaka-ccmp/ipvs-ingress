@@ -1,0 +1,63 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: exabgp
+  namespace: default
+  labels:
+    app: exabgp
+spec:
+  selector:
+    matchLabels:
+      app: exabgp
+  template:
+    metadata:
+      labels:
+        app: exabgp
+    spec:
+      nodeSelector:
+        lvs: "yes"
+      containers:
+      - name: exabgp
+        image: 10.0.0.10:5000/ktaka/exabgp:0.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 10254
+        env:
+          - name: PREFIX
+            value: 10.1.1.0/24
+          - name: AS_NUM
+            value: "65021"
+          - name: PEER_IP
+            value: 10.0.0.25
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: NODE_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+#              - SYS_MODULE
+              - NET_ADMIN
+        volumeMounts:
+        - mountPath: /var/run/netns/node
+          name: netns-node
+      volumes:
+      - name: netns-node
+        hostPath:
+          path: /proc/1/ns/net
+
+

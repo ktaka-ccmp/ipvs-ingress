@@ -41,9 +41,24 @@ spec:
       containers:
       - name: tea
 #        image: nginx
-        image: 192.168.0.102:5000/test/nginx
+#        image: 192.168.0.102:5000/test/nginx
+        image: 192.168.0.102:5000/test/nginx-lvs-tun
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+              - SYS_MODULE
+              - NET_ADMIN
+        volumeMounts:
+        - mountPath: /lib/modules
+          name: lib-modules
         ports:
         - containerPort: 80
+      volumes:
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -81,19 +96,58 @@ spec:
         args:
         - /server.sh
         - --default-backend-service=$(POD_NAMESPACE)/tea-svc
-#        - --default-backend-service=$(POD_NAMESPACE)/default-backend
         securityContext:
           privileged: true
           capabilities:
             add:
-#              - ALL
               - SYS_MODULE 
               - NET_ADMIN
         volumeMounts:
         - mountPath: /lib/modules
           name: lib-modules
+#
+      - name: exabgp
+        image: 192.168.0.102:5000/ktaka/exabgp:0.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 10254
+        env:
+          - name: PREFIX
+            value: 10.1.1.0/24
+          - name: AS_NUM
+            value: "65021"
+          - name: PEER_IP
+            value: 192.168.0.102
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: NODE_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+              - NET_ADMIN
+        volumeMounts:
+        - mountPath: /var/run/netns/node
+          name: netns-node
       volumes:
       - name: lib-modules
         hostPath:
           path: /lib/modules
+      - name: netns-node
+        hostPath:
+          path: /proc/1/ns/net
+
 
