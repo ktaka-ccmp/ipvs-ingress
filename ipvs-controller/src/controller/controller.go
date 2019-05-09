@@ -764,6 +764,19 @@ func (ic *GenericController) createUpstreams(data []interface{}) map[string]*ing
 			if err != nil {
 				glog.Warningf("error creating upstream %v: %v", defBackend, err)
 			}
+
+			s, exists, err := ic.svcLister.Store.GetByKey(svcKey)
+			if err != nil {
+				glog.Warningf("error obtaining service: %v", err)
+				continue
+			}
+
+			if exists {
+				upstreams[defBackend].Service = s.(*api.Service)
+			} else {
+				glog.Warningf("service %v does not exists", svcKey)
+			}
+
 		}
 
 		for _, rule := range ing.Spec.Rules {
