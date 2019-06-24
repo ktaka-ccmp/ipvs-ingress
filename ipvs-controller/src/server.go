@@ -7,16 +7,15 @@ import (
 	"syscall"
 	"os/exec"
 	"strings"
-//	"io/ioutil"
 	"text/template"
 
 	"github.com/spf13/pflag"
+	"github.com/golang/glog"
 
 	api "k8s.io/client-go/pkg/api/v1"
-
-	nginxconfig "k8s.io/ingress/controllers/nginx/pkg/config"
 	"k8s.io/ingress/core/pkg/ingress"
-	"k8s.io/ingress/core/pkg/ingress/controller"
+	"github.com/ktaka-ccmp/ipvs-ingress/ipvs-controller/src/controller"
+//	"k8s.io/ingress/core/pkg/ingress/controller"
 	"k8s.io/ingress/core/pkg/ingress/defaults"
 )
 
@@ -41,7 +40,9 @@ func newIPVSController() ingress.Controller {
 	return &IPVSController{}
 }
 
-type IPVSController struct{}
+type IPVSController struct{
+
+}
 
 func (ipvs IPVSController) SetConfig(cfgMap *api.ConfigMap) {
 	log.Printf("Config map %+v", cfgMap)
@@ -57,9 +58,27 @@ func (ipvs IPVSController) Reload(data []byte) ([]byte, bool, error) {
 	return out, true, err
 }
 
+
+
 func (ipvs IPVSController) OnUpdate(updatePayload ingress.Configuration) ([]byte, error) {
 	log.Printf("Received OnUpdate notification")
+
 	for _, b := range updatePayload.Backends {
+
+		if b.Name == "upstream-default-backend" {
+			continue
+		}
+
+
+		glog.Warningf("b.Name is %v", b.Name)
+		glog.Warningf("b.Port is %v", b.Port)
+		glog.Warningf("b.Service.Kind is %v", b.Service.Kind)
+		glog.Warningf("b.Service.Spec.ClusterIP is %v", b.Service.Spec.ClusterIP)
+		glog.Warningf("b.Service.Spec.ExternalIPs[0] is %v", b.Service.Spec.ExternalIPs[0])
+		glog.Warningf("b.Service.Spec.Ports[0].TargetPort is %v", b.Service.Spec.Ports[0].TargetPort)
+		glog.Warningf("b.Endpoints[0].Address is %v", b.Endpoints[0].Address)
+		glog.Warningf("b.Endpoints[0].Port is %v", b.Endpoints[0].Port)
+
 		type ep struct{
 			Address,Port string
 		}
@@ -72,9 +91,6 @@ func (ipvs IPVSController) OnUpdate(updatePayload ingress.Configuration) ([]byte
 		log.Printf("Endpoint %v:%v added to %v:%v.", a.Address, a.Port, b.Name, b.Port)
 		}
 
-		if b.Name == "upstream-default-backend" {
-			continue
-		}
 		cnf := []string{"/etc/keepalived/ipvs.d/" , b.Name , ".conf"}
 		w, err := os.Create(strings.Join(cnf, ""))
 		if err != nil {
@@ -89,8 +105,7 @@ func (ipvs IPVSController) OnUpdate(updatePayload ingress.Configuration) ([]byte
 }
 
 func (ipvs IPVSController) BackendDefaults() defaults.Backend {
-	// Just adopt nginx's default backend config
-	return nginxconfig.NewDefault().Backend
+        return defaults.Backend{}
 }
 
 func (ipvs IPVSController) Name() string {
@@ -103,10 +118,10 @@ func (ipvs IPVSController) Check(_ *http.Request) error {
 
 func (ipvs IPVSController) Info() *ingress.BackendInfo {
 	return &ingress.BackendInfo{
-		Name:       "dummy",
+		Name:       "ipvs-ingress",
 		Release:    "0.0.0",
 		Build:      "git-00000000",
-		Repository: "git://foo.bar.com",
+		Repository: "git://github/ccmp-ktaka/ipvs-ingress",
 	}
 }
 
@@ -114,7 +129,6 @@ func (ipvs IPVSController) OverrideFlags(*pflag.FlagSet) {
 }
 
 func (ipvs IPVSController) SetListers(lister ingress.StoreLister) {
-
 }
 
 func (ipvs IPVSController) DefaultIngressClass() string {

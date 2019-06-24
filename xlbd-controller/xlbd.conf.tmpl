@@ -1,0 +1,13 @@
+{{- range . }}
+- virtual_server:
+    ipv4: {{.Vip}}
+    port: 80
+    real_servers:
+{{- template "worker" . -}}
+{{end}}
+
+{{define "worker"}}
+{{- range .Eps }}
+      - ipv4: {{.Rip }}
+{{- end -}}
+{{end}}
