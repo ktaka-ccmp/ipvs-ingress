@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ipvs-ingress-svc
+  labels:
+    app: ipvs-ingress
+spec:
+  externalTrafficPolicy: Local
+  type: LoadBalancer
+  loadBalancerIP: 104.154.109.191
+  ports:
+  - port: 80
+    name: http
+    targetPort: 80
+  selector:
+    app: ipvs-controller
+#    app.kubernetes.io/part-of: ipvs-ingress
+

@@ -1,0 +1,38 @@
+virtual_server fwmark 1 {
+    delay_loop 5
+    lb_algo rr
+    lb_kind NAT
+    protocol TCP
+#        alpha
+
+{{range .}}
+    real_server {{.Address}} {{.Port}} {
+	uthreshold 20000
+	TCP_CHECK {
+		connect_timeout 5
+		connect_port {{.Port}}
+	}
+    }
+{{end}}
+}
+
+
+virtual_server fwmark 2 {
+    delay_loop 5
+    lb_algo rr
+    lb_kind TUN
+    protocol TCP
+#        alpha
+
+{{range .}}
+    real_server {{.Address}} {{.Port}} {
+	uthreshold 20000
+	TCP_CHECK {
+		connect_timeout 5
+		connect_port {{.Port}}
+	}
+    }
+{{end}}
+}
+
+
