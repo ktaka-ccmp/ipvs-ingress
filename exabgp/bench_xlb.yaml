@@ -82,18 +82,18 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: ipvs-controller
+  name: xlbd-controller
   namespace: default
   labels:
-    app: ipvs-controller
+    app: xlbd-controller
 spec:
   selector:
     matchLabels:
-      app: ipvs-controller
+      app: xlbd-controller
   template:
     metadata:
       labels:
-        app: ipvs-controller
+        app: xlbd-controller
     spec:
       nodeSelector:
         lvs: "yes"
