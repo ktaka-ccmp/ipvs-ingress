@@ -59,8 +59,6 @@ spec:
         web: "yes"
       containers:
       - name: tea
-#        image: nginx
-#        image: 192.168.0.102:5000/test/nginx
         image: 192.168.0.102:5000/test/nginx-lvs-tun
         securityContext:
           privileged: true
@@ -98,8 +96,7 @@ spec:
       nodeSelector:
         lvs: "yes"
       containers:
-      - name: server
-#        image: 192.168.0.102:5000/ktaka/ipvs-controller:0.1
+      - name: xlbd
         image: 192.168.0.102:5000/ktaka/xlbd-controller:0.1
         imagePullPolicy: Always
         ports:
@@ -114,9 +111,7 @@ spec:
               fieldRef:
                 fieldPath: metadata.namespace
         args:
-        - /server.sh
         - --default-backend-service=$(POD_NAMESPACE)/tea-svc
-#        - -v 3
         securityContext:
           privileged: true
           capabilities:
@@ -124,14 +119,17 @@ spec:
               - SYS_ADMIN
               - SYS_MODULE 
               - NET_ADMIN
+              - SYS_CHROOT
         volumeMounts:
         - mountPath: /lib/modules
           name: lib-modules
         - mountPath: /var/run/netns/node
           name: netns-node
-        - mountPath: /sys/fs/bpf
-          name: sys-fs-bpf
-#
+        - mountPath: /etc/xlbd
+          name: etc-xlbd
+#        - mountPath: /mnt/bpf
+#          name: sys-fs-bpf
+
       - name: exabgp
         image: 192.168.0.102:5000/ktaka/exabgp:0.1
         imagePullPolicy: Always
@@ -175,6 +173,9 @@ spec:
       - name: netns-node
         hostPath:
           path: /proc/1/ns/net
+      - name: etc-xlbd
+        hostPath:
+          path: /etc/xlbd
       - name: sys-fs-bpf
         hostPath:
           path: /sys/fs/bpf
